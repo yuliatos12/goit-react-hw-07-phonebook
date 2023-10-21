@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { nanoid } from 'nanoid'
 import { useDispatch, useSelector } from "react-redux";
-import { addContact, getPhoneBookValue } from "redux/contactSlice";
+import { getPhoneBookValue } from "redux/contactSlice";
+import { postContactThunk } from "services/mock-api";
 
 export const ContactForm = () => {
     const dispatch = useDispatch();
@@ -12,15 +12,15 @@ export const ContactForm = () => {
 
     const handleAddContact = (event) => {
         event.preventDefault();
-        const data = { name, number };
-        const newContact = { ...data, id: nanoid() };
+        const newContact = { name, number };
+      
 
         if (isNameNew(phoneBook, newContact) !== undefined) {
             alert(`${newContact.name} is already in contacts`);
             return;
         };
 
-        dispatch(addContact(newContact));
+        dispatch(postContactThunk(newContact));
         reset();
     };
     const isNameNew = (phoneBook, newContact) => {
@@ -79,4 +79,8 @@ export const ContactForm = () => {
         </form>
     );
 };
+
+
+
+
 

@@ -1,38 +1,52 @@
-import { createSlice } from '@reduxjs/toolkit'
-import { persistReducer } from 'redux-persist'
-import storage from 'redux-persist/lib/storage' 
+import { createSlice, isAnyOf } from '@reduxjs/toolkit'
+import { deleteContactThunk, getContactsThunk, postContactThunk } from 'services/mock-api';
 
-const defaultContacts = {
-    contacts: [
-    { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-    { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-    { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-    { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-]};
+const contactInitialState = {
+    contacts: [],
+    isLoading: false,
+    error: null
+};
 
-const contactSlice = createSlice({
+const onPending = (state) => {
+    state.isLoading = true;
+    state.error = null;
+};
+
+const onRejected = (state, { payload }) => {
+    state.isLoading = false;
+    state.error = payload;
+};
+
+const arr = [getContactsThunk, postContactThunk, deleteContactThunk];
+
+const addStatus = status =>
+    arr.map((item) => item[status]);
+
+export const phoneBookSlice = createSlice({
     name: 'phoneBook',
-    initialState: defaultContacts,
-    reducers: {
-        addContact(state, action) {
-            state.contacts = [...state.contacts, action.payload]
-        },
-        deletingContact(state, action) {
-            state.contacts = state.contacts.filter(contact => contact.id !== action.payload)
-        },
+    initialState: contactInitialState,
+    extraReducers: builder => {
+        builder
+            .addCase(getContactsThunk.fulfilled, (state, { payload }) => {
+                state.isLoading = false;
+                state.contacts = payload;
+                state.error = null;
+            })
+            .addCase(postContactThunk.fulfilled, (state, { payload }) => {
+                state.isLoading = false;
+                state.contacts = [...state.contacts, payload]
+                state.error = null;
+            })
+            .addCase(deleteContactThunk.fulfilled, (state, { payload }) => {
+                state.isLoading = false;
+                state.contacts = state.contacts.filter(contact => contact.id !== payload.id)
+                state.error = null;
+            })
+            .addMatcher(isAnyOf(...addStatus('pending')), onPending)
+            .addMatcher(isAnyOf(...addStatus('rejected')), onRejected)
     }
 });
 
 export const getPhoneBookValue = state => state.phoneBook.contacts;
-
-export const { addContact, deletingContact } = contactSlice.actions;
-
-const persistConfig = {
-  key: 'contacts',
-  storage,
-}
-
-export const contactsPersistReducer = persistReducer(
-    persistConfig,
-    contactSlice.reducer
-);
+export const getIsLoading = state => state.phoneBook.isLoading;
+export const getError = state => state.phoneBook.error;
