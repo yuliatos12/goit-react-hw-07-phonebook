@@ -1,86 +1,66 @@
 import { useState } from "react";
+import { Form, FormInput, FormButton, FormLabel } from "./ContactForm.styled";
 import { useDispatch, useSelector } from "react-redux";
-import { getPhoneBookValue } from "redux/contactSlice";
-import { postContactThunk } from "services/mock-api";
+import { postContact } from "redux/operations";
+import { getContacts } from "redux/selectors";
+import { nanoid } from 'nanoid';
 
 export const ContactForm = () => {
-    const dispatch = useDispatch();
     const [name, setName] = useState('');
     const [number, setNumber] = useState('');
     
-    const phoneBook = useSelector(getPhoneBookValue);
+    const dispatch = useDispatch();
 
-    const handleAddContact = (event) => {
-        event.preventDefault();
-        const newContact = { name, number };
-      
+    const contacts = useSelector(getContacts);
 
-        if (isNameNew(phoneBook, newContact) !== undefined) {
-            alert(`${newContact.name} is already in contacts`);
-            return;
-        };
-
-        dispatch(postContactThunk(newContact));
-        reset();
-    };
-    const isNameNew = (phoneBook, newContact) => {
-        return phoneBook.find(({ name }) =>
-            name.toLowerCase() === newContact.name.toLowerCase())
-    };
-
-
-    const handleInputChange = (event) => {
-        const { name, value } = event.currentTarget;
-        switch (name) {
+    const handleChange = e => {
+        const {name, value} = e.target;
+        switch(name) {
             case 'name':
-                setName(value);
-                break;
+                setName(value); 
+                 break;
             case 'number':
-                setNumber(value);
+                setNumber(value); 
                 break;
-        
-            default:
-                break;
-        };
-    };
+
+                default:
+                    return;
+        }
+    }
+
+    const handleSubmit = e => {
+        e.preventDefault();
+
+        const data = { name, number };
+        const newContact = { ...data, id: nanoid() };
+
+        const existingContact = contacts.find(contact => contact.name === name);
+
+      if (existingContact) {
+        alert(`${name} is already in contacts`);
+        return;
+      }
+
+      dispatch(postContact(newContact));
+        reset();
+
+    }
 
     const reset = () => {
         setName('');
         setNumber('');
     };
-
     return (
-        <form onSubmit={handleAddContact}>
-            <label>
+        <Form onSubmit={handleSubmit}>
+            <FormLabel>
                 Name
-                <input
-                    type="text"
-                    name="name"
-                    value={name}
-                    pattern="^[a-zA-Zа-яА-Я]+(([' \-][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$" title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-                    onChange={handleInputChange}
-                    required
-                />
-            </label>
-            <label>
-                Phone number
-                <input
-                    type="tel"
-                    name="number"
-                    value={number}
-                    pattern="\+?\d{1,4}?[ .\-\s]?\(?\d{1,3}?\)?[ .\-\s]?\d{1,4}[ .\-\s]?\d{1,4}[ .\-\s]?\d{1,9}" title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
-                    onChange={handleInputChange}
-                    required
-                />
-            </label>
-            <button type="submit">
-                Add contact
-            </button>
-        </form>
-    );
-};
-
-
-
-
-
+                <FormInput type="text" name="name" value={name} onChange={handleChange}/>
+            </FormLabel>
+            <FormLabel>
+                Number
+                <FormInput type="tel" name="number" value={number} onChange={handleChange}/>
+            </FormLabel>
+            <FormButton type="submit">Add contact</FormButton>
+        </Form>
+    )
+}

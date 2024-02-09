@@ -1,40 +1,41 @@
-import { getFilter } from "redux/contactFilterSlice";
-import { useDispatch, useSelector } from "react-redux";
-import { getPhoneBookValue } from "redux/contactSlice";
-import { deleteContactThunk, getContactsThunk } from "services/mock-api";
+import { ContactItem } from "components/ContactItem/ContactItem"
 import { useEffect } from "react";
-
+import { useDispatch, useSelector } from "react-redux";
+import { fetchContacts } from "redux/operations";
+import { getContacts } from "redux/selectors";
+import { getFilter } from "redux/selectors"; 
 
 export const ContactList = () => {
-    const dispatch = useDispatch();
 
-    useEffect(() => {
-        dispatch(getContactsThunk())
-    }, [dispatch]);
+ 
+  const contacts = useSelector(getContacts);
+  const filter = useSelector(getFilter);
+  const dispatch = useDispatch();
 
+  useEffect(() => {
+    dispatch(fetchContacts())
+  }, [dispatch]);
 
-    const phoneBook = useSelector(getPhoneBookValue);
-    const filterPhoneBook = useSelector(getFilter);
-
-    const lowerCaseFilter = filterPhoneBook.toLowerCase();
-    const availableContacts = phoneBook.filter(({ name }) =>
-        (name.toLowerCase().includes(lowerCaseFilter)));
-  
-    const deleteContact = (contactId) => {
-        dispatch(deleteContactThunk(contactId))
-    };
-    
-    return (
-        <ul>
-            {availableContacts.map(({ name, number, id }) => (
-                <li key={id}>
-                    <p>{name}: {number}</p>
-                    <button type="button" onClick={() => deleteContact(id)}>Delete</button>
-                </li>))}
-        </ul>
+  const getFilteredContacts = () => {
+    const normalizedFilter = filter.toLowerCase();
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(normalizedFilter)
     );
-};
-
-
-
+  };
+  const filteredContacts = getFilteredContacts();
+    return(
+       
+        <ul>
+           {filteredContacts.map(({ id, name, number }) => (
+        <ContactItem
+          key={id}
+          id={id}
+          name={name}
+          number={number}
+        ></ContactItem>
+      ))}
+        </ul>
+        
+    )
+}
 
